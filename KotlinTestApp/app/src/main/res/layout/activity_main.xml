@@ -15,10 +15,4 @@
         android:text="@string/hello_loading"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
-    <Button
-        android:id="@+id/throwButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/throw_button_label" />
-
 </LinearLayout>
