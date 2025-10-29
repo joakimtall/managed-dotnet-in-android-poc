@@ -5,6 +5,28 @@ def dotnetAppPath = file('../../DotNetAndroidApp')
 def dotnetBuildPath = file('../../DotNetAndroidApp/obj/Release/net9.0-android')
 def dotnetApkPath = file('../../DotNetAndroidApp/bin/Release/net9.0-android/com.companyname.DotNetAndroidApp-Signed.apk')
 
+def dotnetRoot = System.getenv("DOTNET_ROOT")
+if (!dotnetRoot) {
+    // Default install locations for dotnet
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        dotnetRoot = "/usr/local/share/dotnet"
+    } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+        dotnetRoot = System.getenv("ProgramFiles") + "\\dotnet"
+    } else {
+        dotnetRoot = System.getenv("HOME") + "/.dotnet"
+    }
+}
+
+def javaRuntimeJarCandidates = fileTree("$dotnetRoot/packs") {
+    include "**/java_runtime_net6.jar"
+}.files
+
+if (javaRuntimeJarCandidates.empty) {
+    throw new GradleException("Unable to locate java_runtime_net6.jar under $dotnetRoot/packs. Ensure .NET Android workload is installed.")
+}
+
+def javaRuntimeJar = javaRuntimeJarCandidates.max { it.lastModified() }
+
 android {
     namespace 'com.example.kotlindotnettestapp.dotnet'
     compileSdkVersion project.compileSdkVersion
@@ -38,6 +60,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api files('libs/mono.android.jar')
     api files('libs/mono-classes.jar')
+    api files('libs/java_runtime_net6.jar')
 }
 
 task buildDotNetApp(type: Exec) {
@@ -61,6 +84,13 @@ task copyDotNetClassesJar(type: Copy) {
     rename { 'mono-classes.jar' }
 }
 
+task copyJavaRuntimeJar(type: Copy) {
+    description = 'Copy Java runtime stub classes required by Mono runtime'
+    from javaRuntimeJar
+    into 'libs'
+    rename { 'java_runtime_net6.jar' }
+}
+
 task extractDotNetNativeLibs(type: Copy) {
     description = 'Extract native libraries from .NET APK'
     dependsOn copyMonoAndroidJar
@@ -77,7 +107,7 @@ task extractDotNetNativeLibs(type: Copy) {
 
 task prepareDotNetDependencies {
     description = 'Prepare all .NET dependencies'
-    dependsOn copyMonoAndroidJar, copyDotNetClassesJar, extractDotNetNativeLibs
+    dependsOn copyMonoAndroidJar, copyDotNetClassesJar, copyJavaRuntimeJar, extractDotNetNativeLibs
 }
 
 preBuild.dependsOn prepareDotNetDependencies
