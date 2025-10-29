@@ -18,3 +18,9 @@ node_modules/
 *.pyc
 .vscode/
 .claude/
+.gradle/
+local.properties
+build/
+*.iml
+.externalNativeBuild/
+.cxx/

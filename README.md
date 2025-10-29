@@ -17,19 +17,17 @@ This usecase is not officially supported, but we get around that by building an 
 
 ## Project Structure
 
-The repository is organized into three main components:
+The repository is organized as an Android project with integrated .NET components:
 
 | Directory | Description |
 | :--- | :--- |
+| `app/` | The primary Android application module, written in Kotlin. It contains the UI and logic to interact with the .NET library. |
+| `dotnet/` | A special-purpose Android library module. Its `build.gradle.kts` script is responsible for building the .NET projects and preparing their outputs to be consumed by the `app` module. |
 | `DotNetAndroidLib/` | A .NET 9 Android Class Library containing the C# business logic and HelloService implementation. |
-| `DotNetAndroidApp/` | A minimal .NET 9 Android App project. This project is used by the Gradle build process to generate the necessary Android Callable Wrappers, Java bindings (`.jar`), and native shared libraries (`.so`) required for integration. |
-| `KotlinTestApp/` | The main Android application project. |
-| ┣ `app/` | The primary Android application module, written in Kotlin. It contains the UI and logic to interact with the .NET library. |
-| ┗ `dotnet/` | A special-purpose Android library module. Its `build.gradle.kts` script is responsible for building the .NET projects and preparing their outputs to be consumed by the `app` module. |
 
 ## How it Works
 
-The integration is achieved through a clever Gradle build script located in `KotlinTestApp/dotnet/build.gradle.kts`. Here is a summary of the process:
+The integration is achieved through a clever Gradle build script located in `dotnet/build.gradle.kts`. Here is a summary of the process:
 
 1.  **Build .NET**: Gradle invokes a `dotnet build` command on the `DotNetAndroidApp` project.
 2.  **Extract Artifacts**: The script then locates and extracts key build artifacts, including:
@@ -51,6 +49,6 @@ Before building this project, ensure you have the following installed:
 
 1.  Clone the repository.
 2.  Ensure your `DOTNET_ROOT` environment variable is set correctly, or that the `dotnet` executable is available in your system's PATH.
-3.  Open the `KotlinTestApp` directory in Android Studio.
+3.  Open the project root directory in Android Studio.
 4.  Allow Gradle to sync the project. This will automatically trigger the initial .NET build process via the `dotnet` module's build script.
 5.  Run the `app` configuration on an Android emulator or a physical device.

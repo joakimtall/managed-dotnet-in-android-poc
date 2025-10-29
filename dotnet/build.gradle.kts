@@ -7,8 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val dotnetLibPath = file("../../DotNetAndroidLib")
-val dotnetPublishBaseDir = file("../../DotNetAndroidLib/bin/Release/net9.0")
+val dotnetLibPath = file("../DotNetAndroidLib")
+val dotnetPublishBaseDir = file("../DotNetAndroidLib/bin/Release/net9.0")
 
 val dotnetRoot: String = System.getenv("DOTNET_ROOT")?.takeIf { it.isNotBlank() } ?: run {
     val os = org.gradle.internal.os.OperatingSystem.current()
