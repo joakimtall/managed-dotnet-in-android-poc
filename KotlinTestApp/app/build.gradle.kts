@@ -45,6 +45,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation(project(":dotnet"))
 
     testImplementation("junit:junit:4.13.2")

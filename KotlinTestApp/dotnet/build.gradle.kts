@@ -1,5 +1,4 @@
 import org.gradle.api.GradleException
-import org.gradle.api.file.RelativePath
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 
@@ -8,9 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val dotnetAppPath = file("../../DotNetAndroidApp")
-val dotnetBuildPath = file("../../DotNetAndroidApp/obj/Release/net9.0-android")
-val dotnetApkPath = file("../../DotNetAndroidApp/bin/Release/net9.0-android/com.companyname.DotNetAndroidApp-Signed.apk")
+val dotnetLibPath = file("../../DotNetAndroidLib")
+val dotnetPublishBaseDir = file("../../DotNetAndroidLib/bin/Release/net9.0")
 
 val dotnetRoot: String = System.getenv("DOTNET_ROOT")?.takeIf { it.isNotBlank() } ?: run {
     val os = org.gradle.internal.os.OperatingSystem.current()
@@ -25,34 +23,20 @@ val dotnetRoot: String = System.getenv("DOTNET_ROOT")?.takeIf { it.isNotBlank() 
 
 val dotnetCommand = "$dotnetRoot/dotnet"
 
-val javaRuntimeJarCandidates = fileTree("$dotnetRoot/packs") {
-    include("**/java_runtime_net6.jar")
-}.files
+val androidSdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+    ?: throw GradleException("ANDROID_HOME or ANDROID_SDK_ROOT environment variable not set")
 
-if (javaRuntimeJarCandidates.isEmpty()) {
-    throw GradleException("Unable to locate java_runtime_net6.jar under $dotnetRoot/packs. Ensure .NET Android workload is installed.")
+val ndkVersion = "29.0.14206865"
+val ndkPath = file("$androidSdkRoot/ndk/$ndkVersion")
+if (!ndkPath.exists()) {
+    throw GradleException("Android NDK not found at $ndkPath. Install NDK version $ndkVersion through Android Studio SDK Manager.")
 }
 
-val javaRuntimeJar = javaRuntimeJarCandidates.maxByOrNull { it.lastModified() }
-    ?: throw GradleException("Unable to evaluate java_runtime_net6.jar candidates under $dotnetRoot/packs.")
-
-val cryptoRuntimeJarCandidates = fileTree("$dotnetRoot/packs") {
-    include("Microsoft.NETCore.App.Runtime.Mono.android-*/**/libSystem.Security.Cryptography.Native.Android.jar")
-}.files
-
-if (cryptoRuntimeJarCandidates.isEmpty()) {
-    throw GradleException("Unable to locate libSystem.Security.Cryptography.Native.Android.jar under $dotnetRoot/packs. Ensure .NET Android workload is installed.")
-}
-
-val cryptoRuntimeJar = cryptoRuntimeJarCandidates.maxByOrNull { it.lastModified() }
-    ?: throw GradleException("Unable to evaluate crypto runtime jar candidates under $dotnetRoot/packs.")
-
-val dotnetLibsDir = layout.buildDirectory.dir("generated/dotnet/libs")
 val dotnetJniLibsDir = layout.buildDirectory.dir("generated/dotnet/jniLibs")
-val monoAndroidJarFile = dotnetLibsDir.map { it.file("mono.android.jar") }
-val monoClassesJarFile = dotnetLibsDir.map { it.file("mono-classes.jar") }
-val javaRuntimeJarFile = dotnetLibsDir.map { it.file("java_runtime_net6.jar") }
-val cryptoRuntimeJarFile = dotnetLibsDir.map { it.file("libSystem.Security.Cryptography.Native.Android.jar") }
+
+val abiTargets = mapOf(
+    "arm64-v8a" to "linux-bionic-arm64"
+)
 
 android {
     namespace = "com.example.kotlindotnettestapp.dotnet"
@@ -61,6 +45,9 @@ android {
     defaultConfig {
         minSdk = rootProject.extra["minSdkVersion"] as Int
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters.addAll(abiTargets.keys)
+        }
     }
 
     buildTypes {
@@ -88,75 +75,50 @@ android {
     }
 }
 
-val cleanDotNetApp = tasks.register<Exec>("cleanDotNetApp") {
-    description = "Clean the .NET Android app before building"
-    workingDir = dotnetAppPath
-    commandLine(dotnetCommand, "clean", "DotNetAndroidApp.csproj", "-c", "Release")
+val cleanDotNetLib = tasks.register<Exec>("cleanDotNetLib") {
+    description = "Clean the .NET library before building"
+    workingDir = dotnetLibPath
+    commandLine(dotnetCommand, "clean", "DotNetAndroidLib.csproj", "-c", "Release")
     isIgnoreExitValue = true
 }
 
-val buildDotNetApp = tasks.register<Exec>("buildDotNetApp") {
-    description = "Build the .NET Android app to generate bindings and native artifacts"
-    dependsOn(cleanDotNetApp)
-    workingDir = dotnetAppPath
-    commandLine(dotnetCommand, "build", "DotNetAndroidApp.csproj", "-c", "Release")
-}
-
-val copyMonoAndroidJar = tasks.register<Copy>("copyMonoAndroidJar") {
-    description = "Copy mono.android.jar from .NET build"
-    dependsOn(buildDotNetApp)
-    from("${dotnetBuildPath}/android/bin/mono.android.jar")
-    into(dotnetLibsDir)
-}
-
-val copyDotNetClassesJar = tasks.register<Copy>("copyDotNetClassesJar") {
-    description = "Copy compiled Java classes from .NET build"
-    dependsOn(buildDotNetApp)
-    from("${dotnetBuildPath}/android/bin/classes.zip")
-    into(dotnetLibsDir)
-    rename { "mono-classes.jar" }
-}
-
-val copyJavaRuntimeJar = tasks.register<Copy>("copyJavaRuntimeJar") {
-    description = "Copy Java runtime stub classes required by Mono runtime"
-    from(javaRuntimeJar)
-    into(dotnetLibsDir)
-    rename { "java_runtime_net6.jar" }
-}
-
-val copyCryptoRuntimeJar = tasks.register<Copy>("copyCryptoRuntimeJar") {
-    description = "Copy crypto helper classes required by Mono runtime"
-    from(cryptoRuntimeJar)
-    into(dotnetLibsDir)
-    rename { "libSystem.Security.Cryptography.Native.Android.jar" }
-}
-
-val extractDotNetNativeLibs = tasks.register<Copy>("extractDotNetNativeLibs") {
-    description = "Extract native libraries from .NET APK"
-    dependsOn(copyMonoAndroidJar)
-
-    from(zipTree(dotnetApkPath)) {
-        include("lib/**/*.so")
-        eachFile {
-            val segments = relativePath.segments
-            if (segments.isNotEmpty()) {
-                relativePath = RelativePath(true, *segments.drop(1).toTypedArray())
-            }
-        }
+val publishDotNetLibTasks = abiTargets.map { (abi, rid) ->
+    tasks.register<Exec>("publishDotNetLib_${abi}") {
+        description = "Publish .NET library with NativeAOT for $abi"
+        dependsOn(cleanDotNetLib)
+        workingDir = dotnetLibPath
+        val ndkToolchain = "$ndkPath/toolchains/llvm/prebuilt/darwin-x86_64"
+        environment("PATH", "$ndkToolchain/bin:${System.getenv("PATH")}")
+        commandLine(
+            dotnetCommand, "publish", "DotNetAndroidLib.csproj",
+            "-c", "Release",
+            "-r", rid,
+            "/p:PublishAot=true",
+            "/p:StripSymbols=false",
+            "/p:CppCompilerAndLinker=clang"
+        )
     }
-    into(dotnetJniLibsDir)
-    includeEmptyDirs = false
+}
+
+val copyDotNetNativeLibsTasks = abiTargets.map { (abi, rid) ->
+    tasks.register<Copy>("copyDotNetNativeLibs_${abi}") {
+        description = "Copy NativeAOT .so files for $abi"
+        dependsOn("publishDotNetLib_${abi}")
+        from("${dotnetPublishBaseDir}/${rid}/publish") {
+            include("*.so")
+        }
+        into(dotnetJniLibsDir.map { it.dir(abi) })
+    }
+}
+
+val copyDotNetNativeLibs = tasks.register("copyDotNetNativeLibs") {
+    description = "Copy all NativeAOT .so files to jniLibs"
+    dependsOn(copyDotNetNativeLibsTasks)
 }
 
 val prepareDotNetDependencies = tasks.register("prepareDotNetDependencies") {
     description = "Prepare all .NET dependencies"
-    dependsOn(
-        copyMonoAndroidJar,
-        copyDotNetClassesJar,
-        copyJavaRuntimeJar,
-        copyCryptoRuntimeJar,
-        extractDotNetNativeLibs
-    )
+    dependsOn(copyDotNetNativeLibs)
 }
 
 tasks.named("preBuild") {
@@ -164,7 +126,7 @@ tasks.named("preBuild") {
 }
 
 tasks.named("clean") {
-    dependsOn(cleanDotNetApp)
+    dependsOn(cleanDotNetLib)
 }
 
 tasks.matching { task ->
@@ -175,10 +137,5 @@ tasks.matching { task ->
 
 dependencies {
     val kotlinVersion = rootProject.extra["kotlinVersion"] as String
-
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    api(files(monoAndroidJarFile).builtBy(copyMonoAndroidJar))
-    api(files(monoClassesJarFile).builtBy(copyDotNetClassesJar))
-    api(files(javaRuntimeJarFile).builtBy(copyJavaRuntimeJar))
-    api(files(cryptoRuntimeJarFile).builtBy(copyCryptoRuntimeJar))
 }

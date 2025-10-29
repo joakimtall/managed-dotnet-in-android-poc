@@ -1,24 +1,40 @@
-using Android.Runtime;
-using Java.Interop;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using System.Text;
 using HandlebarsDotNet;
 
 namespace DotNetAndroidLib;
 
-[Register("com/roydammarell/dotnetandroid/HelloAndroidService")]
-public class HelloAndroidService : Java.Lang.Object
+public static class HelloAndroidService
 {
-    [Register("createHello", "()Ljava/lang/String;", "")]
-    [Export("createHello")]
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Exported for Android Callable Wrapper binding.")]
-    public virtual string CreateHello()
+    [UnmanagedCallersOnly(EntryPoint = "create_hello")]
+    public static unsafe IntPtr CreateHello()
     {
-        var template = Handlebars.Compile("🎉 Handlebars says: Hello from {{runtime}} on {{platform}}!");
-        var data = new
+        try
         {
-            runtime = ".NET 9",
-            platform = "Android"
-        };
-        return template(data);
+            var template = Handlebars.Compile("🎉 Handlebars says: Hello from {{runtime}} on {{platform}}!");
+            var data = new
+            {
+                runtime = ".NET 9 NativeAOT",
+                platform = "Android"
+            };
+            string result = template(data);
+            byte[] utf8Bytes = Encoding.UTF8.GetBytes(result + '\0');
+            IntPtr buffer = Marshal.AllocHGlobal(utf8Bytes.Length);
+            Marshal.Copy(utf8Bytes, 0, buffer, utf8Bytes.Length);
+            return buffer;
+        }
+        catch
+        {
+            return IntPtr.Zero;
+        }
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "free_string")]
+    public static unsafe void FreeString(IntPtr ptr)
+    {
+        if (ptr != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(ptr);
+        }
     }
 }
