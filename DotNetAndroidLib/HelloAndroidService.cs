@@ -59,8 +59,6 @@ public static class HelloAndroidService
     }
 
     [UnmanagedCallersOnly(EntryPoint = "get_line_item_json")]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(LineItemData))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(LineItemType))]
     public static unsafe IntPtr GetLineItemJson()
     {
         try {
@@ -74,7 +72,7 @@ public static class HelloAndroidService
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = true,
-    TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver()
             };
 
             // AOT-safe: generic overload, T is known (LineItemData)
