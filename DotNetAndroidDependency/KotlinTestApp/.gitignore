@@ -19,3 +19,5 @@ out/
 *.hprof
 .navigation/
 lint/
+dotnet/libs/
+dotnet/build/
