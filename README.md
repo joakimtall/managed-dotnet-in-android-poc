@@ -8,6 +8,8 @@ This usecase is not officially supported, but we get around that by building an 
 
 <img width="400" src="https://github.com/user-attachments/assets/ce468629-6931-4e6f-8d0a-4448c4cd6e3b" />
 
+The rest of README is AI generated, but useful
+
 ## Key Features
 
 *   **.NET 9 Library Integration**: A .NET 9 Android class library (`DotNetAndroidLib`) is consumed by a standard Kotlin-based Android app.
