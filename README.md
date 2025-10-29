@@ -4,6 +4,10 @@ This project demonstrates how to embed a .NET 9 library within a native Kotlin A
 
 It has been more or less stolen from https://github.com/royd/KotlinAppWithXamarinDependency, stripped to minimum, and updated for newer toolchain
 
+This usecase is not officially supported, but we get around that by building an APK which is, and then stealing the necessary files from there to embed it into an existing standard Kotlin Android application.
+
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/20a024b9-d42b-4cc3-beb4-1f94e90f9393" />
+
 ## Key Features
 
 *   **.NET 9 Library Integration**: A .NET 9 Android class library (`DotNetAndroidLib`) is consumed by a standard Kotlin-based Android app.
