@@ -28,28 +28,37 @@ android {
     }
     sourceSets {
         main {
-            java.srcDirs = ['src/main/java', 'build/generated/dotnet/java']
+            java.srcDirs = ['src/main/java']
             jniLibs.srcDirs = ['build/generated/dotnet/jniLibs']
         }
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    api files('libs/mono.android.jar')
+    api files('libs/mono-classes.jar')
 }
 
-task copyDotNetJavaClasses(type: Copy) {
-    description = 'Copy generated Java wrapper classes from .NET build'
-    from "${dotnetBuildPath}/android/src/com/roydammarell/dotnetandroid"
-    into 'build/generated/dotnet/java/com/roydammarell/dotnetandroid'
-    include '*.java'
+task buildDotNetApp(type: Exec) {
+    description = 'Build the .NET Android app to generate bindings and native artifacts'
+    workingDir dotnetAppPath
+    commandLine 'dotnet', 'build', 'DotNetAndroidApp.csproj', '-c', 'Release'
 }
 
 task copyMonoAndroidJar(type: Copy) {
     description = 'Copy mono.android.jar from .NET build'
+    dependsOn buildDotNetApp
     from "${dotnetBuildPath}/android/bin/mono.android.jar"
     into 'libs'
+}
+
+task copyDotNetClassesJar(type: Copy) {
+    description = 'Copy compiled Java classes from .NET build'
+    dependsOn buildDotNetApp
+    from "${dotnetBuildPath}/android/bin/classes.zip"
+    into 'libs'
+    rename { 'mono-classes.jar' }
 }
 
 task extractDotNetNativeLibs(type: Copy) {
@@ -68,15 +77,15 @@ task extractDotNetNativeLibs(type: Copy) {
 
 task prepareDotNetDependencies {
     description = 'Prepare all .NET dependencies'
-    dependsOn copyDotNetJavaClasses, extractDotNetNativeLibs
+    dependsOn copyMonoAndroidJar, copyDotNetClassesJar, extractDotNetNativeLibs
 }
 
 preBuild.dependsOn prepareDotNetDependencies
 
 afterEvaluate {
-    tasks.findAll { task ->
+    tasks.matching { task ->
         task.name.startsWith('compile') && task.name.contains('Java')
-    }.each { task ->
-        task.dependsOn prepareDotNetDependencies
+    }.configureEach {
+        dependsOn prepareDotNetDependencies
     }
 }

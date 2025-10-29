@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Kotlin .NET Test</string>
+    <string name="app_name">KotlinTestApp</string>
+    <string name="hello_loading">Loading message from .NET...</string>
+    <string name="throw_button_label">Throw .NET Exception</string>
 </resources>

@@ -1,35 +1,39 @@
 package com.example.kotlindotnettestapp
 
-import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
-import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : Activity() {
-    private val TAG = "MainActivity"
-    private lateinit var helloService: IHelloService
-    private lateinit var exceptionService: IExceptionService
+class MainActivity : AppCompatActivity() {
+
+    private val helloService by lazy { DotNetServiceFactory.createHelloService() }
+    private val exceptionService by lazy { DotNetServiceFactory.createExceptionService() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        try {
-            helloService = ServiceFactory.createHelloService()
-            exceptionService = ServiceFactory.createExceptionService()
+        val helloView = findViewById<TextView>(R.id.helloView)
+        helloView.text = helloService.createHello()
 
-            val helloView = findViewById<TextView>(R.id.helloView)
-            helloView.text = helloService.createHello()
-            Log.d(TAG, "Successfully called C# service: ${helloView.text}")
-
-            findViewById<Button>(R.id.throwButton).setOnClickListener {
-                Log.d(TAG, "About to call C# exception method")
+        findViewById<Button>(R.id.throwButton).setOnClickListener {
+            try {
                 exceptionService.throwNullReferenceException()
+            } catch (t: Throwable) {
+                Log.e(TAG, "Exception thrown from .NET layer", t)
+                Toast.makeText(
+                    this,
+                    t.message ?: t::class.java.simpleName,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error initializing services", e)
-            findViewById<TextView>(R.id.helloView).text = "Error: ${e.message}"
         }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }
