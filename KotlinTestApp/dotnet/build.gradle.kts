@@ -26,10 +26,12 @@ val dotnetCommand = "$dotnetRoot/dotnet"
 val androidSdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
     ?: throw GradleException("ANDROID_HOME or ANDROID_SDK_ROOT environment variable not set")
 
-val ndkVersion = "29.0.14206865"
-val ndkPath = file("$androidSdkRoot/ndk/$ndkVersion")
-if (!ndkPath.exists()) {
-    throw GradleException("Android NDK not found at $ndkPath. Install NDK version $ndkVersion through Android Studio SDK Manager.")
+val ndkDir = file("$androidSdkRoot/ndk")
+val ndkPath = if (ndkDir.exists()) {
+    ndkDir.listFiles()?.maxByOrNull { it.name }
+        ?: throw GradleException("No NDK versions found in $ndkDir. Install NDK through Android Studio SDK Manager.")
+} else {
+    throw GradleException("NDK directory not found at $ndkDir. Install NDK through Android Studio SDK Manager.")
 }
 
 val dotnetJniLibsDir = layout.buildDirectory.dir("generated/dotnet/jniLibs")

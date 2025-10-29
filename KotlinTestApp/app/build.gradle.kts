@@ -33,15 +33,11 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    androidResources {
-        noCompress += listOf("dll", ".blob")
-    }
 }
 
 dependencies {
     val kotlinVersion = rootProject.extra["kotlinVersion"] as String
 
-    implementation(fileTree("libs") { include("*.jar") })
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
