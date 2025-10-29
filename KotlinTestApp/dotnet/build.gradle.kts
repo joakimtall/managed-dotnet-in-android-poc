@@ -23,6 +23,8 @@ val dotnetRoot: String = System.getenv("DOTNET_ROOT")?.takeIf { it.isNotBlank() 
     }
 }
 
+val dotnetCommand = "$dotnetRoot/dotnet"
+
 val javaRuntimeJarCandidates = fileTree("$dotnetRoot/packs") {
     include("**/java_runtime_net6.jar")
 }.files
@@ -89,14 +91,15 @@ android {
 val cleanDotNetApp = tasks.register<Exec>("cleanDotNetApp") {
     description = "Clean the .NET Android app before building"
     workingDir = dotnetAppPath
-    commandLine("dotnet", "clean", "DotNetAndroidApp.csproj", "-c", "Release")
+    commandLine(dotnetCommand, "clean", "DotNetAndroidApp.csproj", "-c", "Release")
+    isIgnoreExitValue = true
 }
 
 val buildDotNetApp = tasks.register<Exec>("buildDotNetApp") {
     description = "Build the .NET Android app to generate bindings and native artifacts"
     dependsOn(cleanDotNetApp)
     workingDir = dotnetAppPath
-    commandLine("dotnet", "build", "DotNetAndroidApp.csproj", "-c", "Release")
+    commandLine(dotnetCommand, "build", "DotNetAndroidApp.csproj", "-c", "Release")
 }
 
 val copyMonoAndroidJar = tasks.register<Copy>("copyMonoAndroidJar") {
@@ -158,6 +161,10 @@ val prepareDotNetDependencies = tasks.register("prepareDotNetDependencies") {
 
 tasks.named("preBuild") {
     dependsOn(prepareDotNetDependencies)
+}
+
+tasks.named("clean") {
+    dependsOn(cleanDotNetApp)
 }
 
 tasks.matching { task ->
