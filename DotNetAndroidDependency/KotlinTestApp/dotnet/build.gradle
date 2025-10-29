@@ -1,0 +1,82 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+def dotnetAppPath = file('../../DotNetAndroidApp')
+def dotnetBuildPath = file('../../DotNetAndroidApp/obj/Release/net9.0-android')
+def dotnetApkPath = file('../../DotNetAndroidApp/bin/Release/net9.0-android/com.companyname.DotNetAndroidApp-Signed.apk')
+
+android {
+    namespace 'com.example.kotlindotnettestapp.dotnet'
+    compileSdkVersion project.compileSdkVersion
+    defaultConfig {
+        minSdkVersion project.minSdkVersion
+        targetSdkVersion project.targetSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java', 'build/generated/dotnet/java']
+            jniLibs.srcDirs = ['build/generated/dotnet/jniLibs']
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+task copyDotNetJavaClasses(type: Copy) {
+    description = 'Copy generated Java wrapper classes from .NET build'
+    from "${dotnetBuildPath}/android/src/com/roydammarell/dotnetandroid"
+    into 'build/generated/dotnet/java/com/roydammarell/dotnetandroid'
+    include '*.java'
+}
+
+task copyMonoAndroidJar(type: Copy) {
+    description = 'Copy mono.android.jar from .NET build'
+    from "${dotnetBuildPath}/android/bin/mono.android.jar"
+    into 'libs'
+}
+
+task extractDotNetNativeLibs(type: Copy) {
+    description = 'Extract native libraries from .NET APK'
+    dependsOn copyMonoAndroidJar
+
+    from(zipTree(dotnetApkPath)) {
+        include 'lib/**/*.so'
+        eachFile { fcd ->
+            fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+        }
+    }
+    into 'build/generated/dotnet/jniLibs'
+    includeEmptyDirs = false
+}
+
+task prepareDotNetDependencies {
+    description = 'Prepare all .NET dependencies'
+    dependsOn copyDotNetJavaClasses, extractDotNetNativeLibs
+}
+
+preBuild.dependsOn prepareDotNetDependencies
+
+afterEvaluate {
+    tasks.findAll { task ->
+        task.name.startsWith('compile') && task.name.contains('Java')
+    }.each { task ->
+        task.dependsOn prepareDotNetDependencies
+    }
+}
