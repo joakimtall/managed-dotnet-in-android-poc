@@ -15,4 +15,13 @@
         android:text="@string/hello_loading"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
+    <TextView
+        android:id="@+id/jsonView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:text="Loading JSON..."
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:fontFamily="monospace" />
+
 </LinearLayout>

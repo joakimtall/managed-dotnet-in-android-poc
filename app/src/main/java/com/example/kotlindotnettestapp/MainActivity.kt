@@ -17,6 +17,12 @@ class MainActivity : AppCompatActivity() {
         val helloView = findViewById<TextView>(R.id.helloView)
         helloView.text = helloMessage
         Log.d(TAG, "Received greeting from .NET: $helloMessage")
+
+        val lineItemJson = DotNetWrapper.getLineItemJson()
+
+        val jsonView = findViewById<TextView>(R.id.jsonView)
+        jsonView.text = lineItemJson
+        Log.d(TAG, "Received JSON from .NET: $lineItemJson")
     }
 
     companion object {

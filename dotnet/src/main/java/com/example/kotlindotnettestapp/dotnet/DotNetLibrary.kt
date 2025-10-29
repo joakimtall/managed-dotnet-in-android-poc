@@ -6,6 +6,7 @@ import com.sun.jna.Pointer
 
 internal interface DotNetLibrary : Library {
     fun create_hello(): Pointer?
+    fun get_line_item_json(): Pointer?
     fun free_string(ptr: Pointer?)
 
     companion object {

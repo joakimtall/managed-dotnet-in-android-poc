@@ -19,4 +19,19 @@ object DotNetWrapper {
         }
         return helloMessage
     }
+    fun getLineItemJson(): String? {
+        return try {
+            val ptr = DotNetLibrary.INSTANCE.get_line_item_json()
+            if (ptr != null) {
+                val result = ptr.getString(0, "UTF-8")
+                DotNetLibrary.INSTANCE.free_string(ptr)
+                result
+            } else {
+                "Error: Failed to get JSON from .NET"
+            }
+        } catch (e: Exception) {
+            Log.e("DotNetWrapper", "Error calling .NET library", e)
+            "Error: ${e.message}"
+        }
+    }
 }
