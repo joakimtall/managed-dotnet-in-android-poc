@@ -9,11 +9,17 @@
     <EnableDefaultItems>false</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RuntimeIdentifier Condition=" '$(RuntimeIdentifier)' == '' ">linux-bionic-arm64</RuntimeIdentifier>
+    <IlcDisableReflection>false</IlcDisableReflection>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="HelloAndroidService.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Handlebars.Net" Version="2.1.6" />
+  </ItemGroup>
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Handlebars" />
   </ItemGroup>
 </Project>

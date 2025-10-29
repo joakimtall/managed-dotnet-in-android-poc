@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using HandlebarsDotNet;
 
 namespace DotNetAndroidLib;
@@ -7,12 +8,13 @@ namespace DotNetAndroidLib;
 public static class HelloAndroidService
 {
     [UnmanagedCallersOnly(EntryPoint = "create_hello")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(TemplateData))]
     public static unsafe IntPtr CreateHello()
     {
         try
         {
             var template = Handlebars.Compile("🎉 Handlebars says: Hello from {{runtime}} on {{platform}}!");
-            var data = new
+            var data = new TemplateData
             {
                 runtime = ".NET 9 NativeAOT",
                 platform = "Android"
@@ -27,6 +29,12 @@ public static class HelloAndroidService
         {
             return IntPtr.Zero;
         }
+    }
+
+    private class TemplateData
+    {
+        public string runtime { get; set; } = "";
+        public string platform { get; set; } = "";
     }
 
     [UnmanagedCallersOnly(EntryPoint = "free_string")]
