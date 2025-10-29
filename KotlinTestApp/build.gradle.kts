@@ -18,7 +18,7 @@ allprojects {
 extra.apply {
     set("kotlinVersion", kotlinVersion)
     set("compileSdkVersion", 34)
-    set("minSdkVersion", 21)
+    set("minSdkVersion", 30)
     set("targetSdkVersion", 34)
 }
 
