@@ -106,6 +106,7 @@ val copyDotNetNativeLibsTasks = abiTargets.map { (abi, rid) ->
         dependsOn("publishDotNetLib_${abi}")
         from("${dotnetPublishBaseDir}/${rid}/publish") {
             include("*.so")
+            rename { "lib$it" }
         }
         into(dotnetJniLibsDir.map { it.dir(abi) })
     }
