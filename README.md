@@ -6,7 +6,7 @@ It has been more or less stolen from https://github.com/royd/KotlinAppWithXamari
 
 This usecase is not officially supported, but we get around that by building an APK which is, and then stealing the necessary files from there to embed it into an existing standard Kotlin Android application.
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/20a024b9-d42b-4cc3-beb4-1f94e90f9393" />
+<img width="400" src="https://github.com/user-attachments/assets/ce468629-6931-4e6f-8d0a-4448c4cd6e3b" />
 
 ## Key Features
 
