@@ -86,8 +86,15 @@ android {
     }
 }
 
+val cleanDotNetApp = tasks.register<Exec>("cleanDotNetApp") {
+    description = "Clean the .NET Android app before building"
+    workingDir = dotnetAppPath
+    commandLine("dotnet", "clean", "DotNetAndroidApp.csproj", "-c", "Release")
+}
+
 val buildDotNetApp = tasks.register<Exec>("buildDotNetApp") {
     description = "Build the .NET Android app to generate bindings and native artifacts"
+    dependsOn(cleanDotNetApp)
     workingDir = dotnetAppPath
     commandLine("dotnet", "build", "DotNetAndroidApp.csproj", "-c", "Release")
 }
