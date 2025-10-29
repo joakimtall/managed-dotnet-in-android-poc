@@ -16,8 +16,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val helloMessage = helloService.createHello()
         val helloView = findViewById<TextView>(R.id.helloView)
-        helloView.text = helloService.createHello()
+        helloView.text = helloMessage
+        Log.d(TAG, "Received greeting from .NET: $helloMessage")
 
         findViewById<Button>(R.id.throwButton).setOnClickListener {
             try {

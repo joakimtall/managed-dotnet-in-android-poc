@@ -27,6 +27,16 @@ if (javaRuntimeJarCandidates.empty) {
 
 def javaRuntimeJar = javaRuntimeJarCandidates.max { it.lastModified() }
 
+def cryptoRuntimeJarCandidates = fileTree("$dotnetRoot/packs") {
+    include "Microsoft.NETCore.App.Runtime.Mono.android-*/**/libSystem.Security.Cryptography.Native.Android.jar"
+}.files
+
+if (cryptoRuntimeJarCandidates.empty) {
+    throw new GradleException("Unable to locate libSystem.Security.Cryptography.Native.Android.jar under $dotnetRoot/packs. Ensure .NET Android workload is installed.")
+}
+
+def cryptoRuntimeJar = cryptoRuntimeJarCandidates.max { it.lastModified() }
+
 android {
     namespace 'com.example.kotlindotnettestapp.dotnet'
     compileSdkVersion project.compileSdkVersion
@@ -61,6 +71,7 @@ dependencies {
     api files('libs/mono.android.jar')
     api files('libs/mono-classes.jar')
     api files('libs/java_runtime_net6.jar')
+    api files('libs/libSystem.Security.Cryptography.Native.Android.jar')
 }
 
 task buildDotNetApp(type: Exec) {
@@ -91,6 +102,13 @@ task copyJavaRuntimeJar(type: Copy) {
     rename { 'java_runtime_net6.jar' }
 }
 
+task copyCryptoRuntimeJar(type: Copy) {
+    description = 'Copy crypto helper classes required by Mono runtime'
+    from cryptoRuntimeJar
+    into 'libs'
+    rename { 'libSystem.Security.Cryptography.Native.Android.jar' }
+}
+
 task extractDotNetNativeLibs(type: Copy) {
     description = 'Extract native libraries from .NET APK'
     dependsOn copyMonoAndroidJar
@@ -107,7 +125,7 @@ task extractDotNetNativeLibs(type: Copy) {
 
 task prepareDotNetDependencies {
     description = 'Prepare all .NET dependencies'
-    dependsOn copyMonoAndroidJar, copyDotNetClassesJar, copyJavaRuntimeJar, extractDotNetNativeLibs
+    dependsOn copyMonoAndroidJar, copyDotNetClassesJar, copyJavaRuntimeJar, copyCryptoRuntimeJar, extractDotNetNativeLibs
 }
 
 preBuild.dependsOn prepareDotNetDependencies
