@@ -1,19 +1,15 @@
-# .NET 9 and Kotlin Android Integration Example
+# .NET 9 NativeAOT and Kotlin Android Integration Example
 
-This project demonstrates how to embed a .NET 9 library within a native Kotlin Android application. It showcases the ability to call .NET code directly from Kotlin and handle exceptions that cross the boundary between the .NET managed runtime and the Android runtime.
-
-It has been more or less stolen from https://github.com/royd/KotlinAppWithXamarinDependency, stripped to minimum, and updated for newer toolchain
-
-This usecase is not officially supported, but we get around that by building an APK which is, and then stealing the necessary files from there to embed it into an existing standard Kotlin Android application.
+This project demonstrates how to embed a .NET 9 library compiled with NativeAOT within a native Kotlin Android application. It showcases the ability to call C# methods directly from Kotlin through JNA (Java Native Access).
 
 <img width="400" src="https://github.com/user-attachments/assets/ce468629-6931-4e6f-8d0a-4448c4cd6e3b" />
 
 ## Key Features
 
-*   **.NET 9 Library Integration**: A .NET 9 Android class library (`DotNetAndroidLib`) is consumed by a standard Kotlin-based Android app.
-*   **Gradle-Powered Build Process**: The project uses Gradle to orchestrate the entire build. A dedicated Gradle module (`dotnet`) calls the .NET compiler, extracts the necessary artifacts, and packages them for the main Android application module.
-*   **Seamless Interoperability**: Call C# methods from Kotlin as if they were native Java/Kotlin methods.
-*   **3rd Party .NET Dependencies**: Demonstrated using Handlebars template to render text.
+*   **NativeAOT Compilation**: The .NET library is compiled to native code using NativeAOT, eliminating the need for the Mono runtime and providing native performance.
+*   **JNA Integration**: Uses Java Native Access (JNA) to call native C# methods directly from Kotlin.
+*   **Gradle-Powered Build Process**: Gradle orchestrates the entire build, including NativeAOT compilation and native library packaging.
+*   **3rd Party .NET Dependencies**: Demonstrated using Handlebars.NET template library, which is compiled into the native binary.
 
 ## Project Structure
 
@@ -21,29 +17,28 @@ The repository is organized as an Android project with integrated .NET component
 
 | Directory | Description |
 | :--- | :--- |
-| `app/` | The primary Android application module, written in Kotlin. It contains the UI and logic to interact with the .NET library. |
-| `dotnet/` | A special-purpose Android library module. Its `build.gradle.kts` script is responsible for building the .NET projects and preparing their outputs to be consumed by the `app` module. |
-| `DotNetAndroidLib/` | A .NET 9 Android Class Library containing the C# business logic and HelloService implementation. |
+| `app/` | The primary Android application module, written in Kotlin. It contains the UI and logic to interact with the .NET library via JNA. |
+| `dotnet/` | Android library module that orchestrates the NativeAOT compilation of the .NET library and packages the resulting native `.so` files as JNI libraries. |
+| `DotNetAndroidLib/` | A .NET 9 class library containing the C# business logic. Compiled to native code using NativeAOT with `PublishAot=true`. |
 
 ## How it Works
 
-The integration is achieved through a clever Gradle build script located in `dotnet/build.gradle.kts`. Here is a summary of the process:
+The integration is achieved through NativeAOT compilation and JNA. Here is a summary of the process:
 
-1.  **Build .NET**: Gradle invokes a `dotnet build` command on the `DotNetAndroidApp` project.
-2.  **Extract Artifacts**: The script then locates and extracts key build artifacts, including:
-    *   `mono.android.jar`: The core Mono runtime bindings for Android.
-    *   `classes.zip`: The generated Java wrappers for the C# code (renamed to `mono-classes.jar`).
-    *   Native Libraries (`.so`): The compiled native libraries for different Android architectures, which are extracted from the intermediate APK.
-3.  **Provide Dependencies**: These extracted files are exposed as standard Android library dependencies.
-4.  **Consume in App**: The main `app` module includes the `dotnet` module as a dependency (`implementation(project(":dotnet"))`), allowing it to access and instantiate the C# classes (`HelloAndroidService`) directly in Kotlin.
+1.  **NativeAOT Compilation**: Gradle invokes `dotnet publish` with `/p:PublishAot=true` on `DotNetAndroidLib`, targeting `linux-bionic-arm64` (Android ARM64).
+2.  **Native Library Generation**: The .NET compiler produces native `.so` files containing the compiled C# code and all dependencies (including Handlebars.NET).
+3.  **JNI Packaging**: The build script copies the native libraries to the Android `jniLibs` directory structure, renaming them with the `lib` prefix required by Android.
+4.  **JNA Binding**: The Kotlin code uses JNA to load and call functions from the native library, with Kotlin wrappers (`DotNetWrapper.kt`) providing a clean API.
+5.  **Zero Runtime Overhead**: No Mono runtime is required - the C# code runs as native ARM64 code directly on the Android device.
 
 ## Prerequisites
 
 Before building this project, ensure you have the following installed:
 
-*   **.NET 9 SDK** with the `net9.0-android` workload.
-*   **Android SDK** (API Level 34 recommended).
+*   **.NET 9 SDK** with NativeAOT support.
+*   **Android SDK** (API Level 34 recommended) with NDK installed.
 *   **Java Development Kit (JDK)** compatible with your Android Gradle Plugin version.
+*   The build script expects the NDK toolchain at `$ANDROID_HOME/ndk/` (installed via Android Studio SDK Manager).
 
 ## Building and Running
 
