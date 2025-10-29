@@ -141,4 +141,5 @@ tasks.matching { task ->
 dependencies {
     val kotlinVersion = rootProject.extra["kotlinVersion"] as String
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
 }

@@ -1,4 +1,4 @@
-package com.example.kotlindotnettestapp
+package com.example.kotlindotnettestapp.dotnet
 
 import com.sun.jna.Library
 import com.sun.jna.Native
