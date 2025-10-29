@@ -9,7 +9,7 @@ It has been more or less stolen from https://github.com/royd/KotlinAppWithXamari
 *   **.NET 9 Library Integration**: A .NET 9 Android class library (`DotNetAndroidLib`) is consumed by a standard Kotlin-based Android app.
 *   **Gradle-Powered Build Process**: The project uses Gradle to orchestrate the entire build. A dedicated Gradle module (`dotnet`) calls the .NET compiler, extracts the necessary artifacts, and packages them for the main Android application module.
 *   **Seamless Interoperability**: Call C# methods from Kotlin as if they were native Java/Kotlin methods.
-*   **Cross-Boundary Exception Handling**: Demonstrates catching a .NET `NullReferenceException` within a `try-catch` block in Kotlin.
+*   **3rd Party .NET Dependencies**: Demonstrated using Handlebars template to render text.
 
 ## Project Structure
 
@@ -17,7 +17,7 @@ The repository is organized into three main components:
 
 | Directory | Description |
 | :--- | :--- |
-| `DotNetAndroidLib/` | A .NET 9 Android Class Library containing the C# business logic. It provides two services: one to generate a "hello" message using the `Handlebars.Net` library and another to throw an exception for testing purposes. |
+| `DotNetAndroidLib/` | A .NET 9 Android Class Library containing the C# business logic and HelloService implementation. |
 | `DotNetAndroidApp/` | A minimal .NET 9 Android App project. This project is used by the Gradle build process to generate the necessary Android Callable Wrappers, Java bindings (`.jar`), and native shared libraries (`.so`) required for integration. |
 | `KotlinTestApp/` | The main Android application project. |
 | ┣ `app/` | The primary Android application module, written in Kotlin. It contains the UI and logic to interact with the .NET library. |
@@ -33,7 +33,7 @@ The integration is achieved through a clever Gradle build script located in `Kot
     *   `classes.zip`: The generated Java wrappers for the C# code (renamed to `mono-classes.jar`).
     *   Native Libraries (`.so`): The compiled native libraries for different Android architectures, which are extracted from the intermediate APK.
 3.  **Provide Dependencies**: These extracted files are exposed as standard Android library dependencies.
-4.  **Consume in App**: The main `app` module includes the `dotnet` module as a dependency (`implementation(project(":dotnet"))`), allowing it to access and instantiate the C# classes (`HelloAndroidService`, `ExceptionAndroidService`) directly in Kotlin.
+4.  **Consume in App**: The main `app` module includes the `dotnet` module as a dependency (`implementation(project(":dotnet"))`), allowing it to access and instantiate the C# classes (`HelloAndroidService`) directly in Kotlin.
 
 ## Prerequisites
 
