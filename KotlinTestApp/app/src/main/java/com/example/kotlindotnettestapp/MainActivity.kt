@@ -6,11 +6,13 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.roydammarell.dotnetandroid.ExceptionAndroidService
+import com.roydammarell.dotnetandroid.HelloAndroidService
 
 class MainActivity : AppCompatActivity() {
 
-    private val helloService by lazy { DotNetServiceFactory.createHelloService() }
-    private val exceptionService by lazy { DotNetServiceFactory.createExceptionService() }
+    private val helloService by lazy { HelloAndroidService() }
+    private val exceptionService by lazy { ExceptionAndroidService() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
